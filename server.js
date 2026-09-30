@@ -4,11 +4,28 @@ const PORT = process.env.PORT || 8080;
 
 app.use(express.json());
 
-// Bắt tất cả các route mà app gọi tới RevenueCat
-app.all('*', (req, res) => {
-  console.log(`===> Nhận request từ App: \({req.method}\){req.url}`);
+// Log mọi request đổ về server
+app.use((req, res, next) => {
+  console.log(`[\({new Date().toISOString()}]\){req.method} \({req.hostname}\){req.url}`);
+  next();
+});
 
-  // Trả về dữ liệu VIP giả lập
+// Route xử lý cho Firebase Remote Config
+app.all('*/v1/projects/*/namespaces/firebase:fetch', (req, res) => {
+  console.log('===> Xử lý Firebase Remote Config');
+  res.json({
+    entries: {
+      "is_premium": "true",
+      "show_paywall": "false",
+      "subscription_status": "gold"
+    },
+    state: "UPDATE"
+  });
+});
+
+// Route xử lý mặc định cho RevenueCat & các API khác
+app.all('*', (req, res) => {
+  console.log('===> Xử lý RevenueCat / Default Mock Response');
   res.json({
     "request_date": new Date().toISOString(),
     "request_date_ms": Date.now(),
@@ -34,5 +51,5 @@ app.all('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Mock RevenueCat Server đang chạy trên port ${PORT}`);
+  console.log(`Server đang chạy tại port ${PORT}`);
 });
